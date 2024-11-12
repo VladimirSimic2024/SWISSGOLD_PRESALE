@@ -1,0 +1,117 @@
+const int op::deploy = 0x610ca46c;
+const int op::process_claim = 0x43c7d5c9;
+
+const int op::jetton::transfer = 0xf8a7ea5;
+const int op::transfer_notification = 0x7362d09c;
+const int op::internal_transfer = 0x178d4519;
+const int op::excesses = 0xd53276db;
+const int op::burn = 0x595f07bc;
+const int op::burn_notification = 0x7bdd97de;
+const int op::withdraw_tons = 0x6d8e5e3c;
+const int op::withdraw_jettons = 0x768a50b2;
+
+const int op::provide_wallet_address = 0x2c76b973;
+const int op::take_wallet_address = 0xd1735400;
+
+;; Minter
+const int op::mint = 0x4fda1e51;
+const int op::buy = 0x402eff0b;
+const int op::change_admin = 0x4840664f;
+const int op::change_content = 0x11067aba;
+const int op::change_state = 0x58ca5361;
+const int op::withdraw = 0x46ed2e94;
+
+;; change state of presale
+const int op::change_start_time = 0x46ed2e96;
+const int op::change_end_time = 0x46ed2e98;
+const int op::change_price = 0x46ed2e9a;
+const int op::change_cap = 0x46ed2e9c;
+const int op::change_reward = 0x46ed2e9e;
+const int op::change_buying_jetton_amount = 0x46ed2ea0;
+
+;; const int error::already_claimed = 702;
+;; const int error::wrong_sender = 703;
+;; const int error::not_enough_coins = 704;
+;; const int error::wrong_proof = 705;
+;; const int error::already_deployed = 706;
+
+const int const::min_balance = 50000000;
+const int const::fee = 50000000;
+
+const int msg_flag::non_bounceable = 0x10;
+const int msg_flag::bounceable = 0x18;
+
+
+const int error::unknown_op = 0xffff;
+const int error::wrong_workchain = 333;
+
+;; jetton wallet errors
+const int error::unauthorized_transfer = 705;
+const int error::not_enough_jettons = 706;
+const int error::unauthorized_incoming_transfer = 707;
+const int error::malformed_forward_payload = 708;
+const int error::not_enough_tons = 709;
+const int error::burn_fee_not_matched = 710;
+const int error::unknown_action = 0xFFFF;
+const int error::unknown_action_bounced = 0xFFF0;
+
+;; jetton PRESALE minter errors
+const int error::unauthorized_mint_request = 73;
+const int error::unauthorized_burn_request = 74;
+const int error::discovery_fee_not_matched = 75;
+const int error::unauthorized_change_admin_request = 76;
+const int error::unauthorized_change_content_request = 77;
+const int error::unauthorized_withdraw_request = 78;
+const int error::min_amount = 79;
+const int error::cap_exceeded = 80;
+const int error::presale_closed = 81;
+const int error::presale_expired = 82;
+const int error::paused = 83;
+const int error::presale_being = 84;
+
+;; change state error
+const int error::unauthorized_start_time = 85;
+const int error::unauthorized_end_time = 86;
+const int error::unauthorized_price = 87;
+
+const REVERT_ON_ERRORS = 0;
+const PAY_FEES_SEPARATELY = 1;
+const IGNORE_ERRORS = 2;
+const SELFDESTRUCT_ON_EMPTY = 32;
+const CARRY_REMAINING_GAS = 64;
+const CARRY_REMAINING_BALANCE = 128;
+
+
+(slice, (int)) ~load_op(slice s) inline { return s.load_uint(32); }
+(slice, (int)) ~load_query_id(slice s) inline { return s.load_uint(64); }
+builder store_op(builder b, int op) inline { return b.store_uint(op, 32); }
+builder store_query_id(builder b, int query_id) inline { return b.store_uint(query_id, 64); }
+
+
+
+builder store_msg_flag(builder b, int msg_flag) inline { return b.store_uint(msg_flag, 6); }
+
+{-
+  Helpers below fill in default/overwritten values of message layout:
+  Relevant part of TL-B schema:
+  ... other:ExtraCurrencyCollection ihr_fee:Grams fwd_fee:Grams created_lt:uint64 created_at:uint32 = CommonMsgInfoRelaxed;
+  bits      1                               4             4                64                32
+  ... init:(Maybe (Either StateInit ^StateInit))  body:(Either X ^X) = Message X;
+  bits      1      1(if prev is true)                   1
+
+-}
+
+builder store_msgbody_prefix_stateinit(builder b, cell state_init, cell ref) inline {
+    return b.store_uint(4 + 2 + 1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 1).store_ref(state_init).store_ref(ref);
+}
+builder store_msgbody_prefix_slice(builder b) inline {
+    return b.store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1);
+}
+builder store_msgbody_prefix_ref(builder b, cell ref) inline {
+    return b.store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1).store_ref(ref);
+}
+
+(slice, ()) skip_bounce_flag(slice s) impure inline {
+    s~skip_bits(32); ;; 0xFFFFFFFF
+    return (s, ());
+}

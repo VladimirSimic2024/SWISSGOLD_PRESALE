@@ -1,0 +1,4 @@
+# API_BASE_URL = "https://volumebot.pumping2moon.xyz/api";
+API_BASE_URL = "https://localhost:3333/api";
+DB_URI = mongodb://127.0.0.1:27017/tgminiapp
+BOT_TOKEN = 7315708836:AAG5CCRmCYgskE4UMbPrG4dPYO7v1SR5Qsk
